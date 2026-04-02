@@ -1,11 +1,3 @@
--- ============================================================
--- 10 · COST RATE BENCHMARKING ACROSS MARKETS
--- HelloFresh Packaging Analysis
--- Compares procurement rates across DE, UK and NL
--- to quantify the DE price premium and identify negotiation targets
--- ============================================================
-
--- ── A: Current rate per market (most recent valid rate) ─────
 SELECT
     market,
     material_type,

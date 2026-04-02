@@ -1,9 +1,3 @@
--- ============================================================
--- 11 · BOX TYPE ECONOMICS & EFFICIENCY SCORING
--- HelloFresh Packaging Analysis
--- Ranks each box type by cost efficiency, paper waste,
--- damage rate and compliance status
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

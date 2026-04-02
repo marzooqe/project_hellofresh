@@ -1,5 +1,5 @@
 
-WITH deduped AS (
+WITH q1 AS (
     SELECT DISTINCT
         order_id,
         market,
@@ -19,12 +19,8 @@ with_area AS (
         pm.pkg_name,
         pm.material_type,
         pm.status                                           AS pkg_status,
-        CASE
-            WHEN pm.unit_of_measure = 'cm2'
-            THEN pm.surface_area / 10000.0
-            ELSE pm.surface_area
-        END                                                 AS surface_area_m2
-    FROM   deduped d
+        surface_area_m2_normalised
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 

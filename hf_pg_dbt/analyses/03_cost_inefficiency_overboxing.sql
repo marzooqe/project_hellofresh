@@ -1,16 +1,3 @@
--- ============================================================
--- 03 · COST INEFFICIENCY — OVER-BOXING DETECTION
--- HelloFresh Packaging Analysis
--- Identifies orders where actual box > recommended box size,
--- quantifying paper waste (m²) and monetary cost inefficiency
--- ============================================================
--- Definition:
---   Cost Inefficiency (EUR) = Waste m² × Cost per m² (EUR)
---   Waste m²               = actual_area_m2 - recommended_area_m2
---                            (clipped to 0; negative = under-box)
---   Fit Ratio              = actual_area_m2 / recommended_area_m2
---                            (1.0 = perfect fit, >1.0 = over-boxed)
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

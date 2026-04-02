@@ -1,17 +1,3 @@
--- ============================================================
--- 04 · DE COST DECOMPOSITION — PRICE HIKE vs OVER-BOXING
--- HelloFresh Packaging Analysis
--- Splits Germany's Q1 2026 cost spike into two distinct drivers:
---   • External: Supplier price increase (Jan 2026 contract)
---   • Internal: Over-boxing (wrong box assignment — controllable)
--- ============================================================
--- Counter-factual logic:
---   Actual Cost         = actual_area_m2  × new_rate (€1.75)
---   Ideal Cost          = recommended_m2  × new_rate (€1.75)
---   Counter-factual     = actual_area_m2  × old_rate (€1.15)
---   Price Hike Impact   = (new_rate - old_rate) × actual_area_m2
---   Over-boxing Impact  = (actual_area_m2 - recommended_m2) × new_rate
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

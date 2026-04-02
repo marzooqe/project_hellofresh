@@ -1,14 +1,3 @@
--- ============================================================
--- 05 · COST PER MEAL EFFICIENCY INDEX
--- HelloFresh Packaging Analysis
--- Normalises packaging cost by meal count to reveal true
--- unit economics — removes the natural size-bias of raw cost
--- ============================================================
--- Formula:
---   Actual CPM  = order_cost_eur / meals_count
---   Ideal CPM   = ideal_cost_eur / meals_count
---   CPM Premium = Actual CPM - Ideal CPM  (0 if perfect fit)
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

@@ -1,9 +1,3 @@
--- ============================================================
--- 06 · MATERIAL TYPE ANALYSIS
--- HelloFresh Packaging Analysis
--- Performance comparison across Recycled Paper, Corrugated,
--- and Cardboard — cost, waste, damage, and efficiency
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

@@ -1,11 +1,3 @@
--- ============================================================
--- 12 · UK 12-MEAL ANOMALY — UNDER-BOXING HIDDEN LIABILITY
--- HelloFresh Packaging Analysis
--- Analyses order #9005 — a P-S box used for 12 meals —
--- and models the true cost vs the apparent cost
--- ============================================================
-
--- ── A: The anomaly order in full detail ──────────────────────
 SELECT
     u.order_id,
     u.market,

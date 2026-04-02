@@ -1,9 +1,3 @@
--- ============================================================
--- 09 · YEAR-ON-YEAR PRICE COMPARISON
--- HelloFresh Packaging Analysis
--- Isolates the pure supplier price effect by comparing
--- identical box types across 2025 and 2026 in the same market
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT
@@ -22,11 +16,7 @@ with_area_cost AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        CASE
-            WHEN pm.unit_of_measure = 'cm2'
-            THEN pm.surface_area / 10000.0
-            ELSE pm.surface_area
-        END                                                 AS surface_area_m2,
+surface_area_m2_normalised,
         pc.cost_per_m2,
         pc.currency,
         CASE

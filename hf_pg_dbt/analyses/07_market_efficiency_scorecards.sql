@@ -1,13 +1,3 @@
--- ============================================================
--- 07 · MARKET EFFICIENCY SCORECARDS
--- HelloFresh Packaging Analysis
--- Overall packaging health index per market across four
--- dimensions: cost efficiency, sustainability, damage rate,
--- and data quality
--- ============================================================
--- Efficiency Index = total_ideal_cost / total_actual_cost × 100
--- A score of 100% means every order used the correct box.
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT

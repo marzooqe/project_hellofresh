@@ -1,13 +1,3 @@
--- ============================================================
--- 08 · DAMAGE RATE
--- HelloFresh Packaging Analysis
--- Overall, market-level and box-type damage rate analysis
--- Cross-referenced with fit category to test whether box size
--- is a driver of damage (finding: it is NOT)
--- ============================================================
--- Formula:
---   Damage Rate = damaged_orders / total_orders × 100
--- ============================================================
 
 WITH deduped AS (
     SELECT DISTINCT
