@@ -40,9 +40,9 @@ SELECT
              ELSE pc.cost_per_m2 END / u.meals_count, 4)
                                                     AS apparent_cpm_eur,
     'No standard defined for 12 meals'             AS standards_gap
-FROM   fact_box_usage u
-JOIN   dim_packaging_master pm  ON u.pkg_id    = pm.pkg_id
-JOIN   dim_procurement_costs pc
+FROM   transform.fact_box_usage u
+JOIN   transform.dim_packaging_master pm  ON u.pkg_id    = pm.pkg_id
+JOIN   transform.dim_procurement_costs pc
        ON  u.market     = pc.market
        AND u.order_date BETWEEN pc.valid_from AND pc.valid_to
 WHERE  u.order_id = 9005;
@@ -71,7 +71,7 @@ ORDER  BY cost_eur;
 
 
 -- ── C: Standards gap — meal counts without a recommendation ──
--- Reveals which meal counts have no dim_packaging_standards entry
+-- Reveals which meal counts have no transform.dim_packaging_standards entry
 -- Uncomment to run:
 /*
 SELECT DISTINCT
@@ -83,8 +83,8 @@ SELECT DISTINCT
         ELSE 'Standard defined'
     END                                             AS standards_status,
     COUNT(u.order_id)                               AS affected_orders
-FROM   fact_box_usage u
-LEFT  JOIN dim_packaging_standards ds ON u.meals_count = ds.meals_count
+FROM   transform.fact_box_usage u
+LEFT  JOIN transform.dim_packaging_standards ds ON u.meals_count = ds.meals_count
 GROUP  BY u.meals_count, ds.recommended_pkg_id
 ORDER  BY u.meals_count;
 */

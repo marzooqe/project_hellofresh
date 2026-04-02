@@ -17,7 +17,7 @@ SELECT
     END                                             AS rate_eur_per_m2,
     valid_from,
     valid_to
-FROM   dim_procurement_costs
+FROM   transform.dim_procurement_costs
 ORDER  BY valid_from DESC, market;
 
 
@@ -51,8 +51,8 @@ WITH de_volume AS (
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
         END)                                        AS total_area_m2
-    FROM   fact_box_usage u
-    JOIN   dim_packaging_master pm ON u.pkg_id = pm.pkg_id
+    FROM   transform.fact_box_usage u
+    JOIN   transform.dim_packaging_master pm ON u.pkg_id = pm.pkg_id
     WHERE  u.market = 'DE'
       AND  u.order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND  u.pkg_id IS NOT NULL

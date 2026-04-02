@@ -13,7 +13,7 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   transform.fact_box_usage
     WHERE  pkg_id IS NOT NULL
 ),
 
@@ -29,7 +29,7 @@ with_area AS (
             ELSE pm.surface_area
         END                                                 AS actual_area_m2
     FROM   deduped d
-    JOIN   dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    JOIN   transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
 with_recommended AS (
@@ -42,9 +42,9 @@ with_recommended AS (
             ELSE pm_rec.surface_area
         END                                                 AS recommended_area_m2
     FROM   with_area a
-    LEFT  JOIN dim_packaging_standards ds
+    LEFT  JOIN transform.dim_packaging_standards ds
                ON  a.meals_count = ds.meals_count
-    LEFT  JOIN dim_packaging_master pm_rec
+    LEFT  JOIN transform.dim_packaging_master pm_rec
                ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
 
@@ -67,7 +67,7 @@ with_cost AS (
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
                                                             AS waste_m2
     FROM   with_recommended r
-    JOIN   dim_procurement_costs pc
+    JOIN   transform.dim_procurement_costs pc
            ON  r.market     = pc.market
            AND r.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -143,9 +143,9 @@ SELECT
         WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
         ELSE pc.cost_per_m2
     END, 4)                                         AS cost_per_order_eur
-FROM   fact_box_usage u
-JOIN   dim_packaging_master pm   ON u.pkg_id    = pm.pkg_id
-JOIN   dim_procurement_costs pc
+FROM   transform.fact_box_usage u
+JOIN   transform.dim_packaging_master pm   ON u.pkg_id    = pm.pkg_id
+JOIN   transform.dim_procurement_costs pc
        ON  u.market     = pc.market
        AND u.order_date BETWEEN pc.valid_from AND pc.valid_to
 WHERE  u.market  = 'DE'

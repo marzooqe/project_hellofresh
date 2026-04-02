@@ -17,7 +17,7 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   transform.fact_box_usage
     WHERE  pkg_id IS NOT NULL
 ),
 
@@ -60,11 +60,11 @@ with_fit AS (
             ELSE 'Under-boxed'
         END                                                 AS fit_category
     FROM   deduped d
-    JOIN   dim_packaging_master pm
+    JOIN   transform.dim_packaging_master pm
            ON  d.pkg_id = pm.pkg_id
-    LEFT  JOIN dim_packaging_standards ds
+    LEFT  JOIN transform.dim_packaging_standards ds
                ON  d.meals_count = ds.meals_count
-    LEFT  JOIN dim_packaging_master pm_rec
+    LEFT  JOIN transform.dim_packaging_master pm_rec
                ON  ds.recommended_pkg_id = pm_rec.pkg_id
 )
 

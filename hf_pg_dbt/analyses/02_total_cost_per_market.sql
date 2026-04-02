@@ -7,7 +7,7 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   transform.fact_box_usage
     WHERE  order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND  pkg_id IS NOT NULL
 ),
@@ -25,7 +25,7 @@ with_area AS (
             ELSE pm.surface_area
         END                                                 AS surface_area_m2
     FROM   deduped d
-    JOIN   dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    JOIN   transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
 
@@ -35,7 +35,7 @@ with_cost AS (
         pc.cost_per_m2,
         pc.currency
     FROM   with_area a
-    JOIN   dim_procurement_costs pc
+    JOIN   transform.dim_procurement_costs pc
            ON  a.market     = pc.market
            AND a.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),

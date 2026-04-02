@@ -13,7 +13,7 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   transform.fact_box_usage
     WHERE  pkg_id IS NOT NULL
 ),
 
@@ -45,8 +45,8 @@ with_area_cost AS (
             END, 4)                                         AS order_cost_eur,
         YEAR(d.order_date)                                  AS yr
     FROM   deduped d
-    JOIN   dim_packaging_master pm  ON d.pkg_id    = pm.pkg_id
-    JOIN   dim_procurement_costs pc
+    JOIN   transform.dim_packaging_master pm  ON d.pkg_id    = pm.pkg_id
+    JOIN   transform.dim_procurement_costs pc
            ON  d.market     = pc.market
            AND d.order_date BETWEEN pc.valid_from AND pc.valid_to
 )

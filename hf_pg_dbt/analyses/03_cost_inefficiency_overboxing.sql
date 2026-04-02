@@ -20,7 +20,7 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   transform.fact_box_usage
     WHERE  pkg_id IS NOT NULL
 ),
 
@@ -45,11 +45,11 @@ sized AS (
         ds.recommended_pkg_id,
         pm_rec.pkg_name                 AS recommended_pkg_name
     FROM   deduped d
-    JOIN   dim_packaging_standards ds
+    JOIN   transform.dim_packaging_standards ds
            ON  d.meals_count = ds.meals_count
-    JOIN   dim_packaging_master pm_act
+    JOIN   transform.dim_packaging_master pm_act
            ON  d.pkg_id = pm_act.pkg_id
-    JOIN   dim_packaging_master pm_rec
+    JOIN   transform.dim_packaging_master pm_rec
            ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
 
@@ -92,8 +92,8 @@ with_metrics AS (
             ELSE pc.cost_per_m2
         END                             AS cost_per_m2_eur
     FROM   sized s
-    JOIN   fact_box_usage d2  ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
-    JOIN   dim_procurement_costs pc
+    JOIN   transform.fact_box_usage d2  ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
+    JOIN   transform.dim_procurement_costs pc
            ON  s.market     = pc.market
            AND s.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
