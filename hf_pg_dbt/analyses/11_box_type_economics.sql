@@ -29,7 +29,7 @@ with_metrics AS (
         END           AS recommended_area_m2,
         ds.recommended_pkg_id,
         CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
+            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2_eur, 4)
             ELSE pc.cost_per_m2
         END           AS cost_per_m2_eur
     FROM   q1 d

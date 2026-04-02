@@ -73,7 +73,7 @@ with_metrics AS (
         END                             AS overbox_levels,
         -- Point-in-time EUR cost rate
         CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
+            WHEN pc.currency = 'GBP' THEN ROUND(cost_per_m2_eur, 4)
             ELSE pc.cost_per_m2
         END                             AS cost_per_m2_eur
     FROM   sized s

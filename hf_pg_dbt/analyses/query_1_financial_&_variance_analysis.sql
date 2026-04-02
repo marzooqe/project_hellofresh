@@ -34,15 +34,8 @@ with_cost AS (
 with_eur AS (
     SELECT
         *,
-        CASE
-            WHEN currency = 'GBP'
-            THEN cost_per_m2 * 1.17   -- FX rate
-            ELSE cost_per_m2
-        END AS cost_per_m2_eur,
-        surface_area_m2 * CASE
-            WHEN currency = 'GBP' THEN cost_per_m2 * 1.17
-            ELSE cost_per_m2
-        END AS order_cost_eur
+        cost_per_m2_eur,
+        surface_area_m2_normalised * cost_per_m2_eur AS order_cost_eur
     FROM with_cost
 )
 SELECT

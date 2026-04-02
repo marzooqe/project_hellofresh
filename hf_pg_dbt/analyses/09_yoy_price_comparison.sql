@@ -19,20 +19,8 @@ with_area_cost AS (
 surface_area_m2_normalised,
         pc.cost_per_m2,
         pc.currency,
-        CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
-            ELSE pc.cost_per_m2
-        END           AS cost_per_m2_eur,
-        ROUND(
-            CASE
-                WHEN pm.unit_of_measure = 'cm2'
-                THEN pm.surface_area / 10000.0
-                ELSE pm.surface_area
-            END *
-            CASE
-                WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
-                ELSE pc.cost_per_m2
-            END, 4)   AS order_cost_eur,
+        cost_per_m2_eur,
+        (surface_area_m2_normalised * cost_per_m2_eur)   AS order_cost_eur,
         YEAR(d.order_date)                                  AS yr
     FROM   q1 d
     JOIN transform.dim_packaging_master pm  ON d.pkg_id    = pm.pkg_id

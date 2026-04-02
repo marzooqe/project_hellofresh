@@ -35,10 +35,7 @@ SELECT
     o.market,
     COUNT(*)  AS overboxed_orders,
     (SUM(o.waste_m2))   AS total_paper_waste_m2,
-    (SUM(o.waste_m2 * CASE
-        WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
-        ELSE pc.cost_per_m2
-    END)) AS total_cost_inefficiency_eur
+    (SUM(o.waste_m2 * cost_per_m2_eur)) AS total_cost_inefficiency_eur
 FROM   overboxed o
 JOIN transform.dim_procurement_cost pc
        ON  o.market = pc.market

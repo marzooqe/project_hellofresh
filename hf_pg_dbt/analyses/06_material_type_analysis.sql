@@ -45,18 +45,9 @@ with_recommended AS (
 with_cost AS (
     SELECT
         r.*,
-        CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
-            ELSE pc.cost_per_m2
-        END           AS cost_per_m2_eur,
-        ROUND(r.actual_area_m2 * CASE
-            WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
-            ELSE pc.cost_per_m2
-        END, 4)       AS actual_cost_eur,
-        ROUND(COALESCE(r.recommended_area_m2, 0) * CASE
-            WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
-            ELSE pc.cost_per_m2
-        END, 4)       AS ideal_cost_eur,
+        cost_per_m2_eur,
+        (r.actual_area_m2 * cost_per_m2_eur) AS actual_cost_eur,
+        (COALESCE(r.recommended_area_m2, 0) * cost_per_m2_eur) AS ideal_cost_eur,
         GREATEST(r.actual_area_m2
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
                       AS waste_m2

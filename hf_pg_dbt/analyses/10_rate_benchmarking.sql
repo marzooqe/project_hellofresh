@@ -4,7 +4,7 @@ SELECT
     cost_per_m2                                     AS rate_local_currency,
     currency,
     CASE
-        WHEN currency = 'GBP' THEN ROUND(cost_per_m2 * 1.17, 4)
+        WHEN currency = 'GBP' THEN ROUND(cost_per_m2_eur, 4)
         ELSE cost_per_m2
     END       AS rate_eur_per_m2,
     valid_from,

@@ -13,7 +13,7 @@ SELECT
         ELSE pm.surface_area
     END       AS actual_area_m2,
     CASE
-        WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
+        WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2_eur, 4)
         ELSE pc.cost_per_m2
     END       AS cost_per_m2_eur,
     ROUND(
@@ -21,14 +21,14 @@ SELECT
              THEN pm.surface_area / 10000.0
              ELSE pm.surface_area END *
         CASE WHEN pc.currency = 'GBP'
-             THEN pc.cost_per_m2 * 1.17
+             THEN pc.cost_per_m2_eur
              ELSE pc.cost_per_m2 END, 4)            AS actual_cost_eur,
     ROUND(
         CASE WHEN pm.unit_of_measure = 'cm2'
              THEN pm.surface_area / 10000.0
              ELSE pm.surface_area END *
         CASE WHEN pc.currency = 'GBP'
-             THEN pc.cost_per_m2 * 1.17
+             THEN pc.cost_per_m2_eur
              ELSE pc.cost_per_m2 END / u.meals_count, 4)
               AS apparent_cpm_eur,
     'No standard defined for 12 meals'             AS standards_gap
