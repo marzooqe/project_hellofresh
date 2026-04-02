@@ -1,0 +1,5 @@
+market,material_type,cost_per_m2,currency,valid_from,valid_to
+DE,Recycled Paper,1.15,EUR,2025-01-01,2025-12-31
+DE,Recycled Paper,1.75,EUR,2026-01-01,9999-12-31
+UK,Corrugated,1.1,GBP,2025-01-01,9999-12-31
+NL,Corrugated,1.25,EUR,2025-01-01,9999-12-31

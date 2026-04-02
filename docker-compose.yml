@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: hf_dbt_user
+      POSTGRES_PASSWORD: hf_dbt_password
+      POSTGRES_DB: hellofresh
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hf_dbt_user -d hellofresh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dbt_container
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/usr/app/dbt
+      - ~/.dbt:/root/.dbt
+    environment:
+      DBT_PROFILES_DIR: /usr/app/dbt
+    working_dir: /usr/app/dbt
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
