@@ -1,0 +1,18 @@
+
+version: 2
+
+sources:
+  - name: staging
+    schema: staging
+    tables:
+      - name: dim_packaging_standards
+      - name: dim_procurement_cost
+      - name: dim_packaging_master
+      - name: fact_box_usage
+      
+
+models:
+  - name: dim_packaging_standards
+  - name: dim_procurement_cost
+  - name: dim_packaging_master
+  - name: fact_box_usage

@@ -6,12 +6,10 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   fact_box_usage
+    FROM   staging.fact_box_usage
     WHERE  order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND    pkg_id IS NOT NULL
 ),
-
--- normalise
 with_area AS (
     SELECT
         d.*,
@@ -21,21 +19,18 @@ with_area AS (
             ELSE pm.surface_area
         END AS surface_area_m2
     FROM   deduped d
-    INNER JOIN dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    INNER JOIN staging.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
-
 with_cost AS (
     SELECT
         a.*,
         pc.cost_per_m2,
         pc.currency
     FROM   with_area a
-    INNER JOIN dim_procurement_costs pc
+    INNER join staging.dim_procurement_cost  pc
            ON  a.market = pc.market
            AND a.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
-
--- cost conv
 with_eur AS (
     SELECT
         *,
@@ -50,12 +45,11 @@ with_eur AS (
         END AS order_cost_eur
     FROM with_cost
 )
-
 SELECT
     market,
     COUNT(order_id) AS order_count,
-    ROUND(SUM(surface_area_m2), 2) AS total_surface_m2,
-    ROUND(SUM(order_cost_eur), 4) AS total_cost_eur
+    (SUM(surface_area_m2)) AS total_surface_m2,
+    (SUM(order_cost_eur)) AS total_cost_eur
 FROM   with_eur
 GROUP BY market
 ORDER BY total_cost_eur DESC

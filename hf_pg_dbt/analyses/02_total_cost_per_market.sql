@@ -1,16 +1,4 @@
--- ============================================================
--- 02 · TOTAL ACTUAL COST PER MARKET — Q1 2026 (EUR)
--- HelloFresh Packaging Analysis
--- Point-in-time cost join · Unit normalisation · FX conversion
--- ============================================================
--- Assumptions:
---   FX rate : 1 GBP = 1.17 EUR (fixed rate for analysis period)
---   Period  : Q1 2026 (2026-01-01 to 2026-03-31)
---   Dedup   : One row per order_id (removes scanner duplicates)
---   Nulls   : Orders with null pkg_id excluded (cannot be costed)
--- ============================================================
 
--- ── Step 1: Deduplicate and filter to Q1 2026 ───────────────
 WITH deduped AS (
     SELECT DISTINCT
         order_id,
@@ -40,8 +28,7 @@ with_area AS (
     JOIN   dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
--- ── Step 3: Point-in-time cost join ─────────────────────────
--- Matches each order to the procurement rate valid on order_date
+
 with_cost AS (
     SELECT
         a.*,
@@ -53,7 +40,7 @@ with_cost AS (
            AND a.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
 
--- ── Step 4: Convert GBP → EUR and compute order cost ────────
+
 with_eur AS (
     SELECT
         *,
@@ -68,7 +55,7 @@ with_eur AS (
     FROM   with_cost
 )
 
--- ── Final: Aggregate by market ───────────────────────────────
+
 SELECT
     market,
     COUNT(order_id)                         AS order_count,
