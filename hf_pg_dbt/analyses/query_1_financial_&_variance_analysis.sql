@@ -1,14 +1,14 @@
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
         meals_count,
         order_date,
         is_damaged
-    FROM   staging.transform.fact_box_usage
+    FROM transform.fact_box_usage
     WHERE order_date BETWEEN '2026-01-01' AND '2026-03-31'
-      AND    pkg_id IS NOT NULL
+      AND pkg_id IS NOT NULL
 ),
 with_area AS (
     SELECT
@@ -18,8 +18,8 @@ with_area AS (
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
         END AS surface_area_m2
-    FROM   deduped d
-    INNER JOIN staging.transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    FROM q1 d
+    INNER JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 with_cost AS (
     SELECT
@@ -27,7 +27,7 @@ with_cost AS (
         pc.cost_per_m2,
         pc.currency
     FROM   with_area a
-    INNER join staging.transform.dim_procurement_cost  pc
+    INNER join transform.dim_procurement_cost  pc
            ON  a.market = pc.market
            AND a.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
