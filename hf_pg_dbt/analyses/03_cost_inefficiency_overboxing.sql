@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -10,8 +10,6 @@ WITH deduped AS (
     FROM transform.fact_box_usage
     WHERE pkg_id IS NOT NULL
 ),
-
--- Normalise both actual and recommended box surface areas to m²
 sized AS (
     SELECT
         d.*,
@@ -31,7 +29,7 @@ sized AS (
         END                             AS recommended_area_m2,
         ds.recommended_pkg_id,
         pm_rec.pkg_name                 AS recommended_pkg_name
-    FROM   deduped d
+    FROM   q1 d
     JOIN transform.dim_packaging_standards ds
            ON  d.meals_count = ds.meals_count
     JOIN transform.dim_packaging_master pm_act
@@ -46,10 +44,10 @@ with_metrics AS (
         s.*,
         -- Fit ratio: 1.0 = perfect, >1 = over-boxed, <1 = under-boxed
         ROUND(s.actual_area_m2 / s.recommended_area_m2, 4)
-                                        AS fit_ratio,
+  AS fit_ratio,
         -- Waste surface area (0 if not over-boxed)
         GREATEST(s.actual_area_m2 - s.recommended_area_m2, 0)
-                                        AS waste_m2,
+  AS waste_m2,
         -- Fit category
         CASE
             WHEN s.actual_area_m2 = s.recommended_area_m2 THEN 'Perfect Fit'
@@ -126,13 +124,13 @@ SELECT
     market,
     COUNT(*)                                AS total_orders,
     SUM(CASE WHEN waste_m2 > 0 THEN 1 ELSE 0 END)
-                                            AS overboxed_orders,
+      AS overboxed_orders,
     ROUND(SUM(waste_m2), 4)                 AS total_paper_waste_m2,
     ROUND(SUM(cost_inefficiency_eur), 4)    AS total_cost_inefficiency_eur,
     ROUND(AVG(fit_ratio), 4)                AS avg_fit_ratio,
     ROUND(SUM(cost_inefficiency_eur)
           / NULLIF(SUM(actual_cost_eur), 0) * 100, 1)
-                                            AS pct_spend_wasted
+      AS pct_spend_wasted
 FROM   with_cost
 GROUP  BY market
 ORDER BY total_cost_inefficiency_eur DESC;

@@ -3,7 +3,7 @@ SELECT
     u.market,
     u.pkg_id,
     pm.pkg_name,
-    pm.status                                       AS pkg_status,
+    pm.status AS pkg_status,
     u.meals_count,
     u.order_date,
     u.is_damaged,
@@ -11,11 +11,11 @@ SELECT
         WHEN pm.unit_of_measure = 'cm2'
         THEN pm.surface_area / 10000.0
         ELSE pm.surface_area
-    END                                             AS actual_area_m2,
+    END       AS actual_area_m2,
     CASE
         WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
         ELSE pc.cost_per_m2
-    END                                             AS cost_per_m2_eur,
+    END       AS cost_per_m2_eur,
     ROUND(
         CASE WHEN pm.unit_of_measure = 'cm2'
              THEN pm.surface_area / 10000.0
@@ -30,7 +30,7 @@ SELECT
         CASE WHEN pc.currency = 'GBP'
              THEN pc.cost_per_m2 * 1.17
              ELSE pc.cost_per_m2 END / u.meals_count, 4)
-                                                    AS apparent_cpm_eur,
+              AS apparent_cpm_eur,
     'No standard defined for 12 meals'             AS standards_gap
 FROM transform.fact_box_usage u
 JOIN transform.dim_packaging_master pm  ON u.pkg_id    = pm.pkg_id
@@ -73,7 +73,7 @@ SELECT DISTINCT
         WHEN ds.recommended_pkg_id IS NULL
         THEN 'NO STANDARD — box assignment undefined'
         ELSE 'Standard defined'
-    END                                             AS standards_status,
+    END       AS standards_status,
     COUNT(u.order_id)                               AS affected_orders
 FROM transform.fact_box_usage u
 LEFT  JOIN transform.dim_packaging_standards ds ON u.meals_count = ds.meals_count

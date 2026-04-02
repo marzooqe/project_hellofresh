@@ -1,4 +1,4 @@
-WITH deduped AS (
+WITH q1 AS (
     SELECT 
         order_id,
         market,
@@ -31,7 +31,7 @@ enriched AS (
             ELSE pc.cost_per_m2
         END AS cost_per_m2_eur,
         YEAR(d.order_date) AS yr
-    FROM   deduped d
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm    ON d.pkg_id = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds ON d.meals_count = ds.meals_count
     LEFT  JOIN transform.dim_packaging_master pm_rec

@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -16,23 +16,23 @@ with_metrics AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        pm.status                                           AS pkg_status,
+        pm.status     AS pkg_status,
         CASE
             WHEN pm.unit_of_measure = 'cm2'
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
-        END                                                 AS actual_area_m2,
+        END           AS actual_area_m2,
         CASE
             WHEN pm_rec.unit_of_measure = 'cm2'
             THEN pm_rec.surface_area / 10000.0
             ELSE pm_rec.surface_area
-        END                                                 AS recommended_area_m2,
+        END           AS recommended_area_m2,
         ds.recommended_pkg_id,
         CASE
             WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
             ELSE pc.cost_per_m2
-        END                                                 AS cost_per_m2_eur
-    FROM   deduped d
+        END           AS cost_per_m2_eur
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm    ON d.pkg_id         = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds ON d.meals_count = ds.meals_count
     LEFT  JOIN transform.dim_packaging_master pm_rec
@@ -50,12 +50,12 @@ with_cost AS (
                                    * cost_per_m2_eur, 4)   AS ideal_cost_eur,
         GREATEST(actual_area_m2
                  - COALESCE(recommended_area_m2, actual_area_m2), 0)
-                                                            AS waste_m2,
+                      AS waste_m2,
         CASE
             WHEN recommended_area_m2 IS NOT NULL
             THEN ROUND(recommended_area_m2 / actual_area_m2 * 100, 1)
             ELSE NULL
-        END                                                 AS efficiency_pct
+        END           AS efficiency_pct
     FROM   with_metrics
 )
 
@@ -76,7 +76,7 @@ SELECT
     ROUND(AVG(efficiency_pct), 1)                   AS avg_efficiency_pct,
     ROUND(SUM(ideal_cost_eur)
           / NULLIF(SUM(actual_cost_eur), 0) * 100, 1)
-                                                    AS cost_efficiency_pct
+              AS cost_efficiency_pct
 FROM   with_cost
 GROUP  BY pkg_id, pkg_name, material_type, pkg_status
 ORDER BY avg_efficiency_pct DESC;

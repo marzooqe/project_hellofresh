@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -15,13 +15,13 @@ with_area AS (
     SELECT
         d.*,
         pm.pkg_name,
-        pm.status                                           AS pkg_status,
+        pm.status     AS pkg_status,
         CASE
             WHEN pm.unit_of_measure = 'cm2'
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
-        END                                                 AS actual_area_m2
-    FROM   deduped d
+        END           AS actual_area_m2
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
@@ -33,7 +33,7 @@ with_recommended AS (
             WHEN pm_rec.unit_of_measure = 'cm2'
             THEN pm_rec.surface_area / 10000.0
             ELSE pm_rec.surface_area
-        END                                                 AS recommended_area_m2
+        END           AS recommended_area_m2
     FROM   with_area a
     LEFT  JOIN transform.dim_packaging_standards ds
                ON  a.meals_count = ds.meals_count
@@ -47,7 +47,7 @@ with_cost AS (
         CASE
             WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
             ELSE pc.cost_per_m2
-        END                                                 AS cost_per_m2_eur
+        END           AS cost_per_m2_eur
     FROM   with_recommended r
     JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
@@ -90,7 +90,7 @@ with_cpm AS (
             WHEN recommended_area_m2 IS NOT NULL
             THEN ROUND(recommended_area_m2 / actual_area_m2 * 100, 1)
             ELSE NULL
-        END                                              AS efficiency_pct
+        END        AS efficiency_pct
 
     FROM   with_cost
 )
@@ -157,7 +157,7 @@ SELECT
     ROUND(scenario_orders_per_month * 2.275, 2)     AS actual_monthly_cost_eur,
     ROUND(scenario_orders_per_month * 0.9625, 2)    AS ideal_monthly_cost_eur,
     ROUND(scenario_orders_per_month * (2.275 - 0.9625), 2)
-                                                    AS monthly_waste_eur
+              AS monthly_waste_eur
 FROM (
     VALUES (100), (500), (1000), (5000), (10000)
 ) AS t(scenario_orders_per_month)

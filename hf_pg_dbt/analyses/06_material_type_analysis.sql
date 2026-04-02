@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -16,13 +16,13 @@ with_area AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        pm.status                                           AS pkg_status,
+        pm.status     AS pkg_status,
         CASE
             WHEN pm.unit_of_measure = 'cm2'
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
-        END                                                 AS actual_area_m2
-    FROM   deduped d
+        END           AS actual_area_m2
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
@@ -34,7 +34,7 @@ with_recommended AS (
             WHEN pm_rec.unit_of_measure = 'cm2'
             THEN pm_rec.surface_area / 10000.0
             ELSE pm_rec.surface_area
-        END                                                 AS recommended_area_m2
+        END           AS recommended_area_m2
     FROM   with_area a
     LEFT  JOIN transform.dim_packaging_standards ds
                ON  a.meals_count = ds.meals_count
@@ -48,18 +48,18 @@ with_cost AS (
         CASE
             WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
             ELSE pc.cost_per_m2
-        END                                                 AS cost_per_m2_eur,
+        END           AS cost_per_m2_eur,
         ROUND(r.actual_area_m2 * CASE
             WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
             ELSE pc.cost_per_m2
-        END, 4)                                             AS actual_cost_eur,
+        END, 4)       AS actual_cost_eur,
         ROUND(COALESCE(r.recommended_area_m2, 0) * CASE
             WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
             ELSE pc.cost_per_m2
-        END, 4)                                             AS ideal_cost_eur,
+        END, 4)       AS ideal_cost_eur,
         GREATEST(r.actual_area_m2
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
-                                                            AS waste_m2
+                      AS waste_m2
     FROM   with_recommended r
     JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
@@ -74,7 +74,7 @@ with_efficiency AS (
             WHEN recommended_area_m2 IS NOT NULL
             THEN ROUND(recommended_area_m2 / actual_area_m2 * 100, 1)
             ELSE NULL
-        END                                                 AS efficiency_pct
+        END           AS efficiency_pct
     FROM   with_cost
 )
 
@@ -128,7 +128,7 @@ SELECT
     CASE
         WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
         ELSE pc.cost_per_m2
-    END                                             AS rate_eur_per_m2,
+    END       AS rate_eur_per_m2,
     ROUND(CASE
         WHEN pm.unit_of_measure = 'cm2'
         THEN pm.surface_area / 10000.0
@@ -136,7 +136,7 @@ SELECT
     END * CASE
         WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
         ELSE pc.cost_per_m2
-    END, 4)                                         AS cost_per_order_eur
+    END, 4)   AS cost_per_order_eur
 FROM transform.fact_box_usage u
 JOIN transform.dim_packaging_master pm   ON u.pkg_id    = pm.pkg_id
 JOIN transform.dim_procurement_costs pc

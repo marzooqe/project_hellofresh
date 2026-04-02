@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -22,7 +22,7 @@ surface_area_m2_normalised,
         CASE
             WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
             ELSE pc.cost_per_m2
-        END                                                 AS cost_per_m2_eur,
+        END           AS cost_per_m2_eur,
         ROUND(
             CASE
                 WHEN pm.unit_of_measure = 'cm2'
@@ -32,9 +32,9 @@ surface_area_m2_normalised,
             CASE
                 WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
                 ELSE pc.cost_per_m2
-            END, 4)                                         AS order_cost_eur,
+            END, 4)   AS order_cost_eur,
         YEAR(d.order_date)                                  AS yr
-    FROM   deduped d
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm  ON d.pkg_id    = pm.pkg_id
     JOIN transform.dim_procurement_costs pc
            ON  d.market     = pc.market
@@ -85,7 +85,7 @@ SELECT
         (MIN(CASE WHEN yr = 2026 THEN cost_per_m2_eur END)
          - MIN(CASE WHEN yr = 2025 THEN cost_per_m2_eur END))
         / NULLIF(MIN(CASE WHEN yr = 2025 THEN cost_per_m2_eur END), 0) * 100
-    , 1)                                            AS yoy_rate_change_pct
+    , 1)      AS yoy_rate_change_pct
 FROM   with_area_cost
 GROUP  BY market
 HAVING MIN(CASE WHEN yr = 2025 THEN cost_per_m2_eur END) IS NOT NULL

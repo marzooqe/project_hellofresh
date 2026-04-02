@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -28,7 +28,7 @@ sized AS (
             ELSE pm_rec.surface_area
         END                             AS recommended_area_m2,
         ds.recommended_pkg_id
-    FROM   deduped d
+    FROM   q1 d
     JOIN transform.dim_packaging_standards ds
            ON  d.meals_count = ds.meals_count
     JOIN transform.dim_packaging_master pm_act
@@ -62,16 +62,16 @@ decomposed AS (
         -- ④ Price hike impact: extra cost purely from rate change
         --    (same boxes, new rate vs old rate)
         ROUND((1.75 - 1.15) * actual_area_m2, 4)
-                                                AS price_hike_impact_eur,
+          AS price_hike_impact_eur,
 
         -- ⑤ Over-boxing impact: extra cost from wrong box at 2026 rate
         ROUND(GREATEST(actual_area_m2 - recommended_area_m2, 0) * 1.75, 4)
-                                                AS overboxing_impact_eur,
+          AS overboxing_impact_eur,
 
         -- ⑥ Total overspend vs ideal
         ROUND((actual_area_m2 - recommended_area_m2) * 1.75
               + (1.75 - 1.15) * recommended_area_m2, 4)
-                                                AS total_overspend_vs_ideal_eur
+          AS total_overspend_vs_ideal_eur
     FROM   sized
 )
 
@@ -107,10 +107,10 @@ SELECT
     ROUND(SUM(price_hike_impact_eur)
           / NULLIF(SUM(price_hike_impact_eur)
                  + SUM(overboxing_impact_eur), 0) * 100, 1)
-                                        AS pct_price_hike,
+  AS pct_price_hike,
     ROUND(SUM(overboxing_impact_eur)
           / NULLIF(SUM(price_hike_impact_eur)
                  + SUM(overboxing_impact_eur), 0) * 100, 1)
-                                        AS pct_overboxing
+  AS pct_overboxing
 FROM   decomposed;
 */

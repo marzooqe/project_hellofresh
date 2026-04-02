@@ -1,6 +1,6 @@
 
 WITH q1 AS (
-    SELECT DISTINCT
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -18,7 +18,7 @@ with_area AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        pm.status                                           AS pkg_status,
+        pm.status     AS pkg_status,
         surface_area_m2_normalised
     FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
@@ -43,11 +43,11 @@ with_eur AS (
         CASE
             WHEN currency = 'GBP' THEN ROUND(cost_per_m2 * 1.17, 4)
             ELSE cost_per_m2
-        END                                                 AS cost_per_m2_eur,
+        END           AS cost_per_m2_eur,
         surface_area_m2 * CASE
             WHEN currency = 'GBP' THEN cost_per_m2 * 1.17
             ELSE cost_per_m2
-        END                                                 AS order_cost_eur
+        END           AS order_cost_eur
     FROM   with_cost
 )
 

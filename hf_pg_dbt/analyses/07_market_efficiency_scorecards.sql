@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -18,8 +18,8 @@ with_area AS (
             WHEN pm.unit_of_measure = 'cm2'
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
-        END                                                 AS actual_area_m2
-    FROM   deduped d
+        END           AS actual_area_m2
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
@@ -30,7 +30,7 @@ with_recommended AS (
             WHEN pm_rec.unit_of_measure = 'cm2'
             THEN pm_rec.surface_area / 10000.0
             ELSE pm_rec.surface_area
-        END                                                 AS recommended_area_m2
+        END           AS recommended_area_m2
     FROM   with_area a
     LEFT  JOIN transform.dim_packaging_standards ds
                ON  a.meals_count = ds.meals_count
@@ -44,18 +44,18 @@ with_cost AS (
         CASE
             WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2 * 1.17, 4)
             ELSE pc.cost_per_m2
-        END                                                 AS cost_per_m2_eur,
+        END           AS cost_per_m2_eur,
         ROUND(r.actual_area_m2 * CASE
             WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
             ELSE pc.cost_per_m2
-        END, 4)                                             AS actual_cost_eur,
+        END, 4)       AS actual_cost_eur,
         ROUND(COALESCE(r.recommended_area_m2, r.actual_area_m2) * CASE
             WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
             ELSE pc.cost_per_m2
-        END, 4)                                             AS ideal_cost_eur,
+        END, 4)       AS ideal_cost_eur,
         GREATEST(r.actual_area_m2
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
-                                                            AS waste_m2
+                      AS waste_m2
     FROM   with_recommended r
     JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
@@ -75,7 +75,7 @@ SELECT
     ROUND(SUM(ideal_cost_eur), 4)                   AS total_ideal_cost_eur,
     ROUND(SUM(ideal_cost_eur)
           / NULLIF(SUM(actual_cost_eur), 0) * 100, 1)
-                                                    AS cost_efficiency_pct,
+              AS cost_efficiency_pct,
 
     -- Sustainability
     ROUND(SUM(waste_m2), 4)                         AS total_paper_waste_m2,
@@ -116,7 +116,7 @@ SELECT
     SUM(is_damaged)                                 AS damaged,
     ROUND(SUM(ideal_cost_eur)
           / NULLIF(SUM(actual_cost_eur), 0) * 100, 1)
-                                                    AS efficiency_pct
+              AS efficiency_pct
 FROM   with_cost
 GROUP  BY market, pkg_id
 ORDER BY market, efficiency_pct;

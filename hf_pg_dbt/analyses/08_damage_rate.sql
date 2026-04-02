@@ -1,6 +1,6 @@
 
-WITH deduped AS (
-    SELECT DISTINCT
+WITH q1 AS (
+    SELECT 
         order_id,
         market,
         pkg_id,
@@ -16,17 +16,17 @@ with_fit AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        pm.status                                           AS pkg_status,
+        pm.status     AS pkg_status,
         CASE
             WHEN pm.unit_of_measure = 'cm2'
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
-        END                                                 AS actual_area_m2,
+        END           AS actual_area_m2,
         CASE
             WHEN pm_rec.unit_of_measure = 'cm2'
             THEN pm_rec.surface_area / 10000.0
             ELSE pm_rec.surface_area
-        END                                                 AS recommended_area_m2,
+        END           AS recommended_area_m2,
         ds.recommended_pkg_id,
         -- Fit category
         CASE
@@ -48,8 +48,8 @@ with_fit AS (
                       ELSE pm_rec.surface_area END
                 THEN 'Over-boxed'
             ELSE 'Under-boxed'
-        END                                                 AS fit_category
-    FROM   deduped d
+        END           AS fit_category
+    FROM   q1 d
     JOIN transform.dim_packaging_master pm
            ON  d.pkg_id = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds
@@ -60,7 +60,7 @@ with_fit AS (
 
 -- ── A: Overall damage rate ───────────────────────────────────
 SELECT
-    'Overall'                                       AS dimension,
+    'Overall' AS dimension,
     COUNT(order_id)                                 AS total_orders,
     SUM(is_damaged)                                 AS damaged_orders,
     ROUND(SUM(is_damaged) * 100.0
