@@ -17,8 +17,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 with_fit AS (
@@ -60,7 +60,7 @@ with_fit AS (
             ELSE 'Under-boxed'
         END                                                 AS fit_category
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm
+    JOIN transform.dim_packaging_master pm
            ON  d.pkg_id = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds
                ON  d.meals_count = ds.meals_count
@@ -111,7 +111,7 @@ SELECT
 FROM   with_fit
 GROUP  BY fit_category
 
-ORDER  BY dimension;
+ORDER BY dimension;
 
 
 -- ── E: Order-level damage detail ─────────────────────────────
@@ -131,6 +131,6 @@ SELECT
     recommended_area_m2,
     is_damaged
 FROM   with_fit
-WHERE  is_damaged = 1
-ORDER  BY order_date;
+WHERE is_damaged = 1
+ORDER BY order_date;
 */

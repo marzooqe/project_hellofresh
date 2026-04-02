@@ -40,12 +40,12 @@ SELECT
              ELSE pc.cost_per_m2 END / u.meals_count, 4)
                                                     AS apparent_cpm_eur,
     'No standard defined for 12 meals'             AS standards_gap
-FROM   transform.fact_box_usage u
-JOIN   transform.dim_packaging_master pm  ON u.pkg_id    = pm.pkg_id
-JOIN   transform.dim_procurement_costs pc
+FROM transform.fact_box_usage u
+JOIN transform.dim_packaging_master pm  ON u.pkg_id    = pm.pkg_id
+JOIN transform.dim_procurement_costs pc
        ON  u.market     = pc.market
        AND u.order_date BETWEEN pc.valid_from AND pc.valid_to
-WHERE  u.order_id = 9005;
+WHERE u.order_id = 9005;
 
 
 -- ── B: Scenario cost comparison — what should it have cost? ──
@@ -66,7 +66,7 @@ FROM (
         ('Correct: 2× P-L',      '2× P-L',             2.60, '✅ Acceptable — two 6-meal boxes'),
         ('Alt: P-XL + P-M',      '1× P-XL + 1× P-M',  2.70, '⚠ Uses discontinued P-XL stock')
 ) AS t(scenario, box_config, surface_area_m2, food_risk)
-ORDER  BY cost_eur;
+ORDER BY cost_eur;
 */
 
 
@@ -83,8 +83,8 @@ SELECT DISTINCT
         ELSE 'Standard defined'
     END                                             AS standards_status,
     COUNT(u.order_id)                               AS affected_orders
-FROM   transform.fact_box_usage u
+FROM transform.fact_box_usage u
 LEFT  JOIN transform.dim_packaging_standards ds ON u.meals_count = ds.meals_count
 GROUP  BY u.meals_count, ds.recommended_pkg_id
-ORDER  BY u.meals_count;
+ORDER BY u.meals_count;
 */

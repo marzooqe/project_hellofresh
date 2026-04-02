@@ -17,8 +17,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 with_area AS (
@@ -30,7 +30,7 @@ with_area AS (
             ELSE pm.surface_area
         END                                                 AS actual_area_m2
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
 with_recommended AS (
@@ -67,7 +67,7 @@ with_cost AS (
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
                                                             AS waste_m2
     FROM   with_recommended r
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
            AND r.order_date BETWEEN pc.valid_from AND pc.valid_to
 )
@@ -110,7 +110,7 @@ SELECT
 
 FROM   with_cost
 GROUP  BY market
-ORDER  BY overall_health_index_pct DESC;
+ORDER BY overall_health_index_pct DESC;
 
 
 -- ── B: Box type efficiency by market ────────────────────────
@@ -129,5 +129,5 @@ SELECT
                                                     AS efficiency_pct
 FROM   with_cost
 GROUP  BY market, pkg_id
-ORDER  BY market, efficiency_pct;
+ORDER BY market, efficiency_pct;
 */

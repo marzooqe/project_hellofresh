@@ -7,7 +7,7 @@ WITH deduped AS (
         order_date,
         is_damaged
     FROM transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    WHERE pkg_id IS NOT NULL
 ),
 enriched AS (
     SELECT
@@ -32,11 +32,11 @@ enriched AS (
         END AS cost_per_m2_eur,
         YEAR(d.order_date) AS yr
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm    ON d.pkg_id = pm.pkg_id
+    JOIN transform.dim_packaging_master pm    ON d.pkg_id = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds ON d.meals_count = ds.meals_count
     LEFT  JOIN transform.dim_packaging_master pm_rec
                ON  ds.recommended_pkg_id = pm_rec.pkg_id
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_costs pc
            ON  d.market     = pc.market
            AND d.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -77,5 +77,5 @@ SELECT
           / COUNT(order_id), 1) AS overall_damage_rate_pct,
     (SELECT COUNT(*) FROM transform.fact_box_usage WHERE pkg_id IS NULL) AS null_pkg_id_orders,
     (SELECT COUNT(*) - COUNT(DISTINCT order_id)
-     FROM   transform.fact_box_usage WHERE pkg_id IS NOT NULL) AS duplicate_order_rows
+     FROM transform.fact_box_usage WHERE pkg_id IS NOT NULL) AS duplicate_order_rows
 FROM calculated

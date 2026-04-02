@@ -20,9 +20,9 @@ sized AS (
         END AS recommended_area_m2,
         ds.recommended_pkg_id
     FROM   deduped d
-    JOIN   transform.dim_packaging_standards ds ON d.meals_count       = ds.meals_count
-    JOIN   transform.dim_packaging_master   pm_act  ON d.pkg_id            = pm_act.pkg_id
-    JOIN   transform.dim_packaging_master   pm_rec  ON ds.recommended_pkg_id = pm_rec.pkg_id
+    JOIN transform.dim_packaging_standards ds ON d.meals_count       = ds.meals_count
+    JOIN transform.dim_packaging_master   pm_act  ON d.pkg_id            = pm_act.pkg_id
+    JOIN transform.dim_packaging_master   pm_rec  ON ds.recommended_pkg_id = pm_rec.pkg_id
 ),
 
 overboxed AS (
@@ -42,7 +42,7 @@ SELECT
         ELSE pc.cost_per_m2
     END), 4) AS total_cost_inefficiency_eur
 FROM   overboxed o
-JOIN   transform.dim_procurement_costs pc
+JOIN transform.dim_procurement_costs pc
        ON  o.market = pc.market
        AND o.order_date BETWEEN pc.valid_from AND pc.valid_to
 GROUP BY o.market

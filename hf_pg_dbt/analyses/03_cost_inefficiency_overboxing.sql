@@ -20,8 +20,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 -- Normalise both actual and recommended box surface areas to m²
@@ -45,11 +45,11 @@ sized AS (
         ds.recommended_pkg_id,
         pm_rec.pkg_name                 AS recommended_pkg_name
     FROM   deduped d
-    JOIN   transform.dim_packaging_standards ds
+    JOIN transform.dim_packaging_standards ds
            ON  d.meals_count = ds.meals_count
-    JOIN   transform.dim_packaging_master pm_act
+    JOIN transform.dim_packaging_master pm_act
            ON  d.pkg_id = pm_act.pkg_id
-    JOIN   transform.dim_packaging_master pm_rec
+    JOIN transform.dim_packaging_master pm_rec
            ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
 
@@ -92,8 +92,8 @@ with_metrics AS (
             ELSE pc.cost_per_m2
         END                             AS cost_per_m2_eur
     FROM   sized s
-    JOIN   transform.fact_box_usage d2  ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.fact_box_usage d2  ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
+    JOIN transform.dim_procurement_costs pc
            ON  s.market     = pc.market
            AND s.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -130,7 +130,7 @@ SELECT
     cost_inefficiency_eur,
     is_damaged
 FROM   with_cost
-ORDER  BY cost_inefficiency_eur DESC, order_date;
+ORDER BY cost_inefficiency_eur DESC, order_date;
 
 -- ── B: Summary by market (aggregated waste & inefficiency) ──
 -- Uncomment to run instead of query A:
@@ -148,5 +148,5 @@ SELECT
                                             AS pct_spend_wasted
 FROM   with_cost
 GROUP  BY market
-ORDER  BY total_cost_inefficiency_eur DESC;
+ORDER BY total_cost_inefficiency_eur DESC;
 */

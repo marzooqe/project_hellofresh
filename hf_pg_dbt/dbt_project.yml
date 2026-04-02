@@ -35,7 +35,7 @@ seeds:
 # files using the `{{ config(...) }}` macro.
 models:
   hf_pg_dbt:
-    transform:
+  transform:
       +schema: transform
       +materialized: table
     reporting:

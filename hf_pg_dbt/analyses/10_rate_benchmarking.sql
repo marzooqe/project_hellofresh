@@ -17,8 +17,8 @@ SELECT
     END                                             AS rate_eur_per_m2,
     valid_from,
     valid_to
-FROM   transform.dim_procurement_costs
-ORDER  BY valid_from DESC, market;
+FROM transform.dim_procurement_costs
+ORDER BY valid_from DESC, market;
 
 
 -- ── B: DE premium vs each other market ──────────────────────
@@ -51,9 +51,9 @@ WITH de_volume AS (
             THEN pm.surface_area / 10000.0
             ELSE pm.surface_area
         END)                                        AS total_area_m2
-    FROM   transform.fact_box_usage u
-    JOIN   transform.dim_packaging_master pm ON u.pkg_id = pm.pkg_id
-    WHERE  u.market = 'DE'
+    FROM transform.fact_box_usage u
+    JOIN transform.dim_packaging_master pm ON u.pkg_id = pm.pkg_id
+    WHERE u.market = 'DE'
       AND  u.order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND  u.pkg_id IS NOT NULL
 )
@@ -68,5 +68,5 @@ FROM   de_volume
 CROSS JOIN (
     VALUES (1.65), (1.55), (1.45), (1.35), (1.25)
 ) AS t(target_rate_eur)
-ORDER  BY target_rate_eur;
+ORDER BY target_rate_eur;
 */

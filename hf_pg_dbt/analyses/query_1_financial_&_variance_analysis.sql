@@ -7,7 +7,7 @@ WITH deduped AS (
         order_date,
         is_damaged
     FROM   staging.transform.fact_box_usage
-    WHERE  order_date BETWEEN '2026-01-01' AND '2026-03-31'
+    WHERE order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND    pkg_id IS NOT NULL
 ),
 with_area AS (

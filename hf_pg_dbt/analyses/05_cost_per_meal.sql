@@ -18,8 +18,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 with_area AS (
@@ -33,7 +33,7 @@ with_area AS (
             ELSE pm.surface_area
         END                                                 AS actual_area_m2
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
 with_recommended AS (
@@ -60,7 +60,7 @@ with_cost AS (
             ELSE pc.cost_per_m2
         END                                                 AS cost_per_m2_eur
     FROM   with_recommended r
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
            AND r.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -126,7 +126,7 @@ SELECT
     efficiency_pct,
     is_damaged
 FROM   with_cpm
-ORDER  BY actual_cpm_eur DESC;
+ORDER BY actual_cpm_eur DESC;
 
 
 -- ── B: Overall CPM across all orders ────────────────────────
@@ -136,7 +136,7 @@ SELECT
     ROUND(SUM(actual_cost_eur) / SUM(meals_count), 4) AS overall_actual_cpm_eur,
     ROUND(SUM(ideal_cost_eur)  / SUM(meals_count), 4) AS overall_ideal_cpm_eur
 FROM   with_cpm
-WHERE  recommended_area_m2 IS NOT NULL;
+WHERE recommended_area_m2 IS NOT NULL;
 */
 
 
@@ -155,7 +155,7 @@ SELECT
     ROUND(AVG(efficiency_pct), 1)                   AS avg_efficiency_pct
 FROM   with_cpm
 GROUP  BY market
-ORDER  BY actual_cpm_eur DESC;
+ORDER BY actual_cpm_eur DESC;
 */
 
 
@@ -172,5 +172,5 @@ SELECT
 FROM (
     VALUES (100), (500), (1000), (5000), (10000)
 ) AS t(scenario_orders_per_month)
-ORDER  BY scenario_orders_per_month;
+ORDER BY scenario_orders_per_month;
 */

@@ -13,8 +13,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 with_metrics AS (
@@ -39,11 +39,11 @@ with_metrics AS (
             ELSE pc.cost_per_m2
         END                                                 AS cost_per_m2_eur
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm    ON d.pkg_id         = pm.pkg_id
+    JOIN transform.dim_packaging_master pm    ON d.pkg_id         = pm.pkg_id
     LEFT  JOIN transform.dim_packaging_standards ds ON d.meals_count = ds.meals_count
     LEFT  JOIN transform.dim_packaging_master pm_rec
                ON  ds.recommended_pkg_id = pm_rec.pkg_id
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_costs pc
            ON  d.market     = pc.market
            AND d.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -85,4 +85,4 @@ SELECT
                                                     AS cost_efficiency_pct
 FROM   with_cost
 GROUP  BY pkg_id, pkg_name, material_type, pkg_status
-ORDER  BY avg_efficiency_pct DESC;
+ORDER BY avg_efficiency_pct DESC;

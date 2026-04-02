@@ -13,8 +13,8 @@ WITH deduped AS (
         meals_count,
         order_date,
         is_damaged
-    FROM   transform.fact_box_usage
-    WHERE  pkg_id IS NOT NULL
+    FROM transform.fact_box_usage
+    WHERE pkg_id IS NOT NULL
 ),
 
 with_area AS (
@@ -29,7 +29,7 @@ with_area AS (
             ELSE pm.surface_area
         END                                                 AS actual_area_m2
     FROM   deduped d
-    JOIN   transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
+    JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
 
 with_recommended AS (
@@ -67,7 +67,7 @@ with_cost AS (
                  - COALESCE(r.recommended_area_m2, r.actual_area_m2), 0)
                                                             AS waste_m2
     FROM   with_recommended r
-    JOIN   transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_costs pc
            ON  r.market     = pc.market
            AND r.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
@@ -99,7 +99,7 @@ SELECT
     ROUND(SUM(cost_inefficiency_eur), 4)            AS total_cost_inefficiency_eur
 FROM   with_efficiency
 GROUP  BY material_type
-ORDER  BY total_actual_cost_eur DESC;
+ORDER BY total_actual_cost_eur DESC;
 
 
 -- ── B: Material type × market cross-tab ─────────────────────
@@ -115,7 +115,7 @@ SELECT
     ROUND(AVG(efficiency_pct), 1)                   AS avg_efficiency_pct
 FROM   with_efficiency
 GROUP  BY material_type, market
-ORDER  BY material_type, market;
+ORDER BY material_type, market;
 */
 
 
@@ -143,13 +143,13 @@ SELECT
         WHEN pc.currency = 'GBP' THEN pc.cost_per_m2 * 1.17
         ELSE pc.cost_per_m2
     END, 4)                                         AS cost_per_order_eur
-FROM   transform.fact_box_usage u
-JOIN   transform.dim_packaging_master pm   ON u.pkg_id    = pm.pkg_id
-JOIN   transform.dim_procurement_costs pc
+FROM transform.fact_box_usage u
+JOIN transform.dim_packaging_master pm   ON u.pkg_id    = pm.pkg_id
+JOIN transform.dim_procurement_costs pc
        ON  u.market     = pc.market
        AND u.order_date BETWEEN pc.valid_from AND pc.valid_to
-WHERE  u.market  = 'DE'
+WHERE u.market  = 'DE'
   AND  u.pkg_id  = 'P-S'
   AND  u.pkg_id IS NOT NULL
-ORDER  BY year;
+ORDER BY year;
 */
