@@ -45,10 +45,10 @@ calculated AS (
     FROM enriched
 )
 SELECT
-    COUNT(order_id)                                 AS total_clean_orders,
-    SUM(meals_count)                                AS total_meals,
-    (SUM(actual_cost_eur))                  AS total_actual_cost_eur,
-    (SUM(ideal_cost_eur))                   AS total_ideal_cost_eur,
+    COUNT(order_id) AS total_clean_orders,
+    SUM(meals_count) AS total_meals,
+    (SUM(actual_cost_eur)) AS total_actual_cost_eur,
+    (SUM(ideal_cost_eur)) AS total_ideal_cost_eur,
     (SUM(actual_cost_eur) - SUM(ideal_cost_eur)) AS total_cost_inefficiency_eur,
     ((SUM(actual_cost_eur) - SUM(ideal_cost_eur))
           / NULLIF(SUM(actual_cost_eur), 0) * 100) AS pct_spend_wasted,
