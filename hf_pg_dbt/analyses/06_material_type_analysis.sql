@@ -14,7 +14,7 @@ with_area AS (
         d.*,
         pm.pkg_name,
         pm.material_type,
-        pm.status     AS pkg_status,
+        pm.status AS pkg_status,
         pm.surface_area_m2_normalised AS actual_area_m2
     FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
