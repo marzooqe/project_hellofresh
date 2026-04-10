@@ -1,4 +1,3 @@
-
 WITH q1 AS (
     SELECT 
         order_id,
@@ -14,21 +13,13 @@ sized AS (
     SELECT
         d.*,
         -- Actual box area
-        CASE
-            WHEN pm_act.unit_of_measure = 'cm2'
-            THEN pm_act.surface_area / 10000.0
-            ELSE pm_act.surface_area
-        END                             AS actual_area_m2,
-        pm_act.pkg_name                 AS actual_pkg_name,
-        pm_act.material_type            AS actual_material,
+ 		pm_act.surface_area_m2_normalised  AS actual_area_m2,
+        pm_act.pkg_name AS actual_pkg_name,
+        pm_act.material_type AS actual_material,
         -- Recommended box area
-        CASE
-            WHEN pm_rec.unit_of_measure = 'cm2'
-            THEN pm_rec.surface_area / 10000.0
-            ELSE pm_rec.surface_area
-        END                             AS recommended_area_m2,
+        pm_rec.surface_area_m2_normalised  AS recommended_area_m2,
         ds.recommended_pkg_id,
-        pm_rec.pkg_name                 AS recommended_pkg_name
+        pm_rec.pkg_name AS recommended_pkg_name
     FROM   q1 d
     JOIN transform.dim_packaging_standards ds
            ON  d.meals_count = ds.meals_count
@@ -37,13 +28,11 @@ sized AS (
     JOIN transform.dim_packaging_master pm_rec
            ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
-
--- Compute fit metrics and join procurement rate
 with_metrics AS (
     SELECT
         s.*,
         -- Fit ratio: 1.0 = perfect, >1 = over-boxed, <1 = under-boxed
-        ROUND(s.actual_area_m2 / s.recommended_area_m2, 4)
+        (s.actual_area_m2 / s.recommended_area_m2)
   AS fit_ratio,
         -- Waste surface area (0 if not over-boxed)
         GREATEST(s.actual_area_m2 - s.recommended_area_m2, 0)
@@ -57,7 +46,7 @@ with_metrics AS (
             WHEN s.actual_area_m2 / s.recommended_area_m2 <= 1.5
                 THEN 'Moderate Over-box'
             ELSE 'Severe Over-box'
-        END                             AS fit_category,
+        END AS fit_category,
         -- Number of box sizes skipped (P-S=1, P-M=2, P-L=3, P-XL=4)
         CASE d2.pkg_id
             WHEN 'P-S'  THEN 1
@@ -70,34 +59,27 @@ with_metrics AS (
             WHEN 'P-M'  THEN 2
             WHEN 'P-L'  THEN 3
             WHEN 'P-XL' THEN 4
-        END                             AS overbox_levels,
+        END AS overbox_levels,
         -- Point-in-time EUR cost rate
-        CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(cost_per_m2_eur, 4)
-            ELSE pc.cost_per_m2
-        END                             AS cost_per_m2_eur
+        cost_per_m2_eur
     FROM   sized s
-    JOIN transform.fact_box_usage d2  ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
-    JOIN transform.dim_procurement_costs pc
-           ON  s.market     = pc.market
+    JOIN transform.fact_box_usage d2 ON s.order_id = d2.order_id AND d2.pkg_id IS NOT NULL
+    JOIN transform.dim_procurement_cost pc
+           ON  s.market = pc.market
            AND s.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
-
--- Final cost calculations
 with_cost AS (
     SELECT
         *,
-        ROUND(actual_area_m2     * cost_per_m2_eur, 4) AS actual_cost_eur,
-        ROUND(recommended_area_m2 * cost_per_m2_eur, 4) AS ideal_cost_eur,
-        ROUND(waste_m2           * cost_per_m2_eur, 4) AS cost_inefficiency_eur
+        (actual_area_m2 * cost_per_m2_eur) AS actual_cost_eur,
+        (recommended_area_m2 * cost_per_m2_eur) AS ideal_cost_eur,
+        (waste_m2 * cost_per_m2_eur) AS cost_inefficiency_eur
     FROM   with_metrics
 )
-
--- ── A: Order-level detail (all orders) ──────────────────────
 SELECT
     order_id,
     market,
-    pkg_id          AS actual_pkg,
+    pkg_id AS actual_pkg,
     actual_pkg_name,
     recommended_pkg_id,
     recommended_pkg_name,
@@ -118,17 +100,16 @@ FROM   with_cost
 ORDER BY cost_inefficiency_eur DESC, order_date;
 
 -- ── B: Summary by market (aggregated waste & inefficiency) ──
--- Uncomment to run instead of query A:
 /*
 SELECT
     market,
-    COUNT(*)                                AS total_orders,
+    COUNT(*) AS total_orders,
     SUM(CASE WHEN waste_m2 > 0 THEN 1 ELSE 0 END)
       AS overboxed_orders,
-    ROUND(SUM(waste_m2), 4)                 AS total_paper_waste_m2,
-    ROUND(SUM(cost_inefficiency_eur), 4)    AS total_cost_inefficiency_eur,
-    ROUND(AVG(fit_ratio), 4)                AS avg_fit_ratio,
-    ROUND(SUM(cost_inefficiency_eur)
+    (SUM(waste_m2)) AS total_paper_waste_m2,
+    (SUM(cost_inefficiency_eur)) AS total_cost_inefficiency_eur,
+    (AVG(fit_ratio)) AS avg_fit_ratio,
+    (SUM(cost_inefficiency_eur)
           / NULLIF(SUM(actual_cost_eur), 0) * 100, 1)
       AS pct_spend_wasted
 FROM   with_cost

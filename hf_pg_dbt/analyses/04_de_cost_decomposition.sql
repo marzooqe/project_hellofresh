@@ -1,4 +1,3 @@
-
 WITH q1 AS (
     SELECT 
         order_id,
@@ -12,21 +11,11 @@ WITH q1 AS (
       AND  order_date BETWEEN '2026-01-01' AND '2026-03-31'
       AND  pkg_id IS NOT NULL
 ),
-
--- Normalise actual and recommended surface areas
 sized AS (
     SELECT
         d.*,
-        CASE
-            WHEN pm_act.unit_of_measure = 'cm2'
-            THEN pm_act.surface_area / 10000.0
-            ELSE pm_act.surface_area
-        END                             AS actual_area_m2,
-        CASE
-            WHEN pm_rec.unit_of_measure = 'cm2'
-            THEN pm_rec.surface_area / 10000.0
-            ELSE pm_rec.surface_area
-        END                             AS recommended_area_m2,
+        pm_act.surface_area_m2_normalised AS actual_area_m2,
+        pm_rec.surface_area_m2_normalised AS recommended_area_m2,
         ds.recommended_pkg_id
     FROM   q1 d
     JOIN transform.dim_packaging_standards ds
@@ -36,7 +25,6 @@ sized AS (
     JOIN transform.dim_packaging_master pm_rec
            ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
-
 -- Hard-code both rate periods for DE (Recycled Paper)
 -- 2025 rate: €1.15/m²   2026 rate: €1.75/m²
 decomposed AS (
@@ -49,32 +37,23 @@ decomposed AS (
         order_date,
         actual_area_m2,
         recommended_area_m2,
-
-        -- ① What was actually paid
-        ROUND(actual_area_m2      * 1.75, 4)    AS actual_cost_eur,
-
-        -- ② What should have been paid (right box, 2026 price)
-        ROUND(recommended_area_m2 * 1.75, 4)    AS ideal_cost_eur,
-
-        -- ③ Counter-factual: actual boxes at OLD 2025 price
-        ROUND(actual_area_m2      * 1.15, 4)    AS counterfactual_cost_eur,
-
-        -- ④ Price hike impact: extra cost purely from rate change
+        --What was actually paid
+        (actual_area_m2      * 1.75)    AS actual_cost_eur,
+        --What should have been paid (right box, 2026 price)
+        (recommended_area_m2 * 1.75)    AS ideal_cost_eur,
+        --Counter-factual: actual boxes at OLD 2025 price
+        (actual_area_m2      * 1.15)    AS counterfactual_cost_eur,
+        --Price hike impact: extra cost purely from rate change
         --    (same boxes, new rate vs old rate)
-        ROUND((1.75 - 1.15) * actual_area_m2, 4)
-          AS price_hike_impact_eur,
-
-        -- ⑤ Over-boxing impact: extra cost from wrong box at 2026 rate
-        ROUND(GREATEST(actual_area_m2 - recommended_area_m2, 0) * 1.75, 4)
-          AS overboxing_impact_eur,
-
-        -- ⑥ Total overspend vs ideal
-        ROUND((actual_area_m2 - recommended_area_m2) * 1.75
-              + (1.75 - 1.15) * recommended_area_m2, 4)
+        ((1.75 - 1.15) * actual_area_m2) AS price_hike_impact_eur,
+        --Over-boxing impact: extra cost from wrong box at 2026 rate
+        (GREATEST(actual_area_m2 - recommended_area_m2, 0) * 1.75) AS overboxing_impact_eur,
+        --Total overspend vs ideal
+        ((actual_area_m2 - recommended_area_m2) * 1.75
+              + (1.75 - 1.15) * recommended_area_m2)
           AS total_overspend_vs_ideal_eur
     FROM   sized
 )
-
 -- ── A: Order-level decomposition ────────────────────────────
 SELECT
     order_id,
@@ -98,19 +77,15 @@ ORDER BY order_date;
 -- Uncomment to run:
 /*
 SELECT
-    SUM(actual_cost_eur)                AS total_actual_eur,
-    SUM(ideal_cost_eur)                 AS total_ideal_eur,
-    SUM(counterfactual_cost_eur)        AS total_counterfactual_eur,
-    SUM(price_hike_impact_eur)          AS total_price_hike_impact_eur,
-    SUM(overboxing_impact_eur)          AS total_overboxing_impact_eur,
+    SUM(actual_cost_eur) AS total_actual_eur,
+    SUM(ideal_cost_eur) AS total_ideal_eur,
+    SUM(counterfactual_cost_eur) AS total_counterfactual_eur,
+    SUM(price_hike_impact_eur) AS total_price_hike_impact_eur,
+    SUM(overboxing_impact_eur) AS total_overboxing_impact_eur,
     -- Attribution split
-    ROUND(SUM(price_hike_impact_eur)
-          / NULLIF(SUM(price_hike_impact_eur)
-                 + SUM(overboxing_impact_eur), 0) * 100, 1)
-  AS pct_price_hike,
-    ROUND(SUM(overboxing_impact_eur)
-          / NULLIF(SUM(price_hike_impact_eur)
-                 + SUM(overboxing_impact_eur), 0) * 100, 1)
-  AS pct_overboxing
-FROM   decomposed;
+    (SUM(price_hike_impact_eur) / NULLIF(SUM(price_hike_impact_eur)
+                 + SUM(overboxing_impact_eur), 0) * 100) AS pct_price_hike,
+    (SUM(overboxing_impact_eur) / NULLIF(SUM(price_hike_impact_eur)
+                 + SUM(overboxing_impact_eur), 0) * 100) AS pct_overboxing
+from decomposed;
 */

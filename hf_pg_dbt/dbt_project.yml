@@ -38,6 +38,6 @@ models:
   transform:
       +schema: transform
       +materialized: table
-    reporting:
+  reporting:
       +schema: reporting
       +materialized: table

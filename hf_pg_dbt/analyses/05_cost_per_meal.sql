@@ -1,4 +1,3 @@
-
 WITH q1 AS (
     SELECT 
         order_id,
@@ -10,50 +9,35 @@ WITH q1 AS (
     FROM transform.fact_box_usage
     WHERE pkg_id IS NOT NULL
 ),
-
 with_area AS (
     SELECT
         d.*,
         pm.pkg_name,
         pm.status     AS pkg_status,
-        CASE
-            WHEN pm.unit_of_measure = 'cm2'
-            THEN pm.surface_area / 10000.0
-            ELSE pm.surface_area
-        END           AS actual_area_m2
+        pm.surface_area_m2_normalised AS actual_area_m2
     FROM   q1 d
     JOIN transform.dim_packaging_master pm ON d.pkg_id = pm.pkg_id
 ),
-
 with_recommended AS (
     SELECT
         a.*,
         ds.recommended_pkg_id,
-        CASE
-            WHEN pm_rec.unit_of_measure = 'cm2'
-            THEN pm_rec.surface_area / 10000.0
-            ELSE pm_rec.surface_area
-        END           AS recommended_area_m2
+        pm_rec.surface_area_m2_normalised AS recommended_area_m2
     FROM   with_area a
     LEFT  JOIN transform.dim_packaging_standards ds
                ON  a.meals_count = ds.meals_count
     LEFT  JOIN transform.dim_packaging_master pm_rec
                ON  ds.recommended_pkg_id = pm_rec.pkg_id
 ),
-
 with_cost AS (
     SELECT
         r.*,
-        CASE
-            WHEN pc.currency = 'GBP' THEN ROUND(pc.cost_per_m2_eur, 4)
-            ELSE pc.cost_per_m2
-        END           AS cost_per_m2_eur
+        cost_per_m2_eur
     FROM   with_recommended r
-    JOIN transform.dim_procurement_costs pc
+    JOIN transform.dim_procurement_cost pc
            ON  r.market     = pc.market
            AND r.order_date BETWEEN pc.valid_from AND pc.valid_to
 ),
-
 with_cpm AS (
     SELECT
         order_id,
@@ -67,34 +51,26 @@ with_cpm AS (
         recommended_area_m2,
         cost_per_m2_eur,
         is_damaged,
-
         -- Absolute costs
-        ROUND(actual_area_m2      * cost_per_m2_eur, 4) AS actual_cost_eur,
-        ROUND(recommended_area_m2 * cost_per_m2_eur, 4) AS ideal_cost_eur,
-
+        (actual_area_m2      * cost_per_m2_eur) AS actual_cost_eur,
+        (recommended_area_m2 * cost_per_m2_eur) AS ideal_cost_eur,
         -- Cost per meal (actual)
-        ROUND(actual_area_m2      * cost_per_m2_eur
-              / meals_count, 4)                          AS actual_cpm_eur,
-
+        (actual_area_m2      * cost_per_m2_eur / meals_count)                          AS actual_cpm_eur,
         -- Cost per meal (ideal — NULL if no standard defined)
-        ROUND(recommended_area_m2 * cost_per_m2_eur
-              / meals_count, 4)                          AS ideal_cpm_eur,
-
+        (recommended_area_m2 * cost_per_m2_eur
+              / meals_count)                          AS ideal_cpm_eur,
         -- Premium paid per meal due to wrong box
-        ROUND(
+        (
             (actual_area_m2 - COALESCE(recommended_area_m2, actual_area_m2))
-            * cost_per_m2_eur / meals_count, 4)          AS cpm_premium_eur,
-
+            * cost_per_m2_eur / meals_count)          AS cpm_premium_eur,
         -- Efficiency score: ideal / actual (100% = perfect)
         CASE
             WHEN recommended_area_m2 IS NOT NULL
-            THEN ROUND(recommended_area_m2 / actual_area_m2 * 100, 1)
+            THEN (recommended_area_m2 / actual_area_m2 * 100)
             ELSE NULL
         END        AS efficiency_pct
-
     FROM   with_cost
 )
-
 -- ── A: Order-level CPM (sorted worst to best) ───────────────
 SELECT
     order_id,
@@ -119,45 +95,39 @@ ORDER BY actual_cpm_eur DESC;
 
 
 -- ── B: Overall CPM across all orders ────────────────────────
--- Uncomment to run:
 /*
 SELECT
-    ROUND(SUM(actual_cost_eur) / SUM(meals_count), 4) AS overall_actual_cpm_eur,
-    ROUND(SUM(ideal_cost_eur)  / SUM(meals_count), 4) AS overall_ideal_cpm_eur
+    (SUM(actual_cost_eur) / SUM(meals_count)) AS overall_actual_cpm_eur,
+    (SUM(ideal_cost_eur)  / SUM(meals_count)) AS overall_ideal_cpm_eur
 FROM   with_cpm
 WHERE recommended_area_m2 IS NOT NULL;
 */
 
-
 -- ── C: CPM by market ────────────────────────────────────────
--- Uncomment to run:
 /*
 SELECT
     market,
-    COUNT(order_id)                                 AS orders,
-    SUM(meals_count)                                AS total_meals,
-    ROUND(SUM(actual_cost_eur), 4)                  AS total_actual_cost_eur,
-    ROUND(SUM(actual_cost_eur)
-          / SUM(meals_count), 4)                    AS actual_cpm_eur,
-    ROUND(SUM(ideal_cost_eur)
-          / NULLIF(SUM(meals_count), 0), 4)         AS ideal_cpm_eur,
-    ROUND(AVG(efficiency_pct), 1)                   AS avg_efficiency_pct
+    COUNT(order_id) AS orders,
+    SUM(meals_count) AS total_meals,
+    (SUM(actual_cost_eur)) AS total_actual_cost_eur,
+    (SUM(actual_cost_eur)
+          / SUM(meals_count)) AS actual_cpm_eur,
+    (SUM(ideal_cost_eur)
+          / NULLIF(SUM(meals_count), 0)) AS ideal_cpm_eur,
+    (AVG(efficiency_pct)) AS avg_efficiency_pct
 FROM   with_cpm
 GROUP  BY market
 ORDER BY actual_cpm_eur DESC;
 */
 
-
 -- ── D: Scale scenario — CPM waste at volume ─────────────────
 -- What does the DE order 9002 (P-L for 2 meals) pattern cost at scale?
--- Uncomment to run:
 /*
 SELECT
     scenario_orders_per_month,
-    ROUND(scenario_orders_per_month * 2.275, 2)     AS actual_monthly_cost_eur,
-    ROUND(scenario_orders_per_month * 0.9625, 2)    AS ideal_monthly_cost_eur,
-    ROUND(scenario_orders_per_month * (2.275 - 0.9625), 2)
-              AS monthly_waste_eur
+    (scenario_orders_per_month * 2.275)     AS actual_monthly_cost_eur,
+    (scenario_orders_per_month * 0.9625)    AS ideal_monthly_cost_eur,
+    (scenario_orders_per_month * (2.275 - 0.9625)) AS monthly_waste_eur
 FROM (
     VALUES (100), (500), (1000), (5000), (10000)
 ) AS t(scenario_orders_per_month)
