@@ -1,12 +1,7 @@
 SELECT
     market,
     material_type,
-    cost_per_m2 AS rate_local_currency,
-    currency,
-    CASE
-        WHEN currency = 'GBP' THEN ROUND(cost_per_m2_eur, 4)
-        ELSE cost_per_m2
-    END       AS rate_eur_per_m2,
+    cost_per_m2_eur rate_eur_per_m2,
     valid_from,
     valid_to
 FROM transform.dim_procurement_cost
@@ -14,7 +9,6 @@ ORDER BY valid_from DESC, market;
 
 -- ── B: DE premium vs each other market ──────────────────────
 -- How much more DE pays per m² than UK and NL in 2026
--- Uncomment to run:
 /*
 SELECT
     'DE vs NL' AS comparison,
@@ -36,11 +30,7 @@ SELECT
 /*
 WITH de_volume AS (
     SELECT
-        SUM(CASE
-            WHEN pm.unit_of_measure = 'cm2'
-            THEN pm.surface_area / 10000.0
-            ELSE pm.surface_area
-        END)  AS total_area_m2
+        SUM(pm.surface_area_m2_normalised)  AS total_area_m2
     FROM transform.fact_box_usage u
     JOIN transform.dim_packaging_master pm ON u.pkg_id = pm.pkg_id
     WHERE u.market = 'DE'

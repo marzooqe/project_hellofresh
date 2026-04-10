@@ -34,7 +34,7 @@ with_cost AS (
 SELECT
     market,
     COUNT(order_id)         AS order_count,
-    (SUM(surface_area_m2_normalised), 4)  AS total_surface_m2,
+    (SUM(surface_area_m2_normalised))  AS total_surface_m2,
     (AVG(cost_per_m2_eur))  AS avg_rate_eur_per_m2,
     (SUM(order_cost_eur))   AS total_cost_eur,
     (AVG(order_cost_eur))   AS avg_order_cost_eur,
@@ -43,4 +43,4 @@ SELECT
   / COUNT(order_id), 1)     AS damage_rate_pct
 FROM   with_cost
 GROUP  BY market
-ORDER BY total_cost_eur DES
+ORDER BY total_cost_eur DESC
